@@ -19,3 +19,10 @@ class PropertySerializer(serializers.ModelSerializer):
         if request is not None:
             url = reverse('buy', kwargs={'product_id': obj.id})
             return request.build_absolute_uri(url)
+
+
+class InvestmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Investment
+        fields = '__all__'
+        read_only_fields = ('id', 'user', 'product', 'current_value', 'start_date', 'end_date')

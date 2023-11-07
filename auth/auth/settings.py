@@ -13,7 +13,9 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
-from decouple import config
+import sys
+# sys.path.append('/path/to/decouple/site-packages')
+from decouple import Config
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-50yxvu6p#tq4b%kx%_djg+=^&h95)z_vu-0pqau#w$$jcd_d$n'
+SECRET_KEY = Config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -45,10 +47,10 @@ INSTALLED_APPS = [
     'drf_yasg',
     "corsheaders",
     # 'django.contrib.staticfiles',
-    'cloudinary_storage',
+    # 'cloudinary_storage',
     'cloudinary',
     'business',
-    # 'cloudinary',
+    # 'cloudinary'
 
 ]
 
@@ -94,12 +96,10 @@ WSGI_APPLICATION = 'auth.wsgi.application'
 
 AUTH_USER_MODEL = 'authApp.CustomUser'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'damilolaolawoore03@gmail.com'
-EMAIL_HOST_PASSWORD = 'zyjtzbtfyupfegmo'
-EMAIL_USE_TLS = True
+EMAIL_HOST = Config('EMAIL_HOST')
+EMAIL_HOST_USER = Config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = Config('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = Config('EMAIL_PORT')
 
 CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672//'
 CELERY_APP = 'authApp'
@@ -110,12 +110,8 @@ CELERY_APP = 'authApp'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'auth',
-        'USER': 'postgres',
-        'PASSWORD': 'htcode12',  # Use the password you set
-        'HOST': 'localhost',  # Use 'localhost' if PostgreSQL is on the same machine
-        'PORT': '',  # Leave it empty for the default PostgreSQL port (5432)
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
