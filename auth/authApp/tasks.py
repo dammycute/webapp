@@ -2,7 +2,7 @@ from celery import shared_task
 from django.core.mail import send_mail
 from .models import CustomUser
 
-@shared_task
+# @shared_task
 def send_activation_code(user_id, redirect_url):
     user = CustomUser.objects.get(id=user_id)
     subject = "Activate your Account"
@@ -11,7 +11,7 @@ def send_activation_code(user_id, redirect_url):
     recipient_list = [user.email]
     send_mail(subject, message, from_email, recipient_list)
 
-@shared_task
+# @shared_task
 def send_activation_msg(email):
     user = CustomUser.objects.filter(email=email).first()
     if user:

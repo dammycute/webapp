@@ -70,3 +70,28 @@ class OtpModel(models.Model):
 
     def __str__(self):
         return self.user.email
+
+
+class CustomerDetails(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, unique= True)
+    first_name = models.CharField(max_length=255, null=True)
+    last_name = models.CharField(max_length=255, null=True)
+    phone_number = models.CharField(max_length=255, null=True)
+    address = models.CharField(max_length=255, null=True)
+    city = models.CharField(max_length=70, null=True)
+    state = models.CharField(max_length=100, null=True)
+    zipcode = models.IntegerField(null=True)
+    birth_date = models.DateField(null=True, blank=True)
+    # bvn = models.IntegerField(null=True)
+    security_question = models.CharField(max_length=255, null=True)
+    security_answer = models.CharField(max_length=255, null=True)
+    picture = models.ImageField(upload_to='images/user/', null=True, blank=True,)
+    
+    def name(self):
+        return self.first_name + ' ' + self.last_name
+
+    def __str__(self):
+        return self.first_name
+
+    class Meta:
+        verbose_name_plural = "Customer Details"

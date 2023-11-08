@@ -15,7 +15,7 @@ from datetime import timedelta
 import os
 import sys
 # sys.path.append('/path/to/decouple/site-packages')
-from decouple import Config
+from decouple import config
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = Config('SECRET_KEY')
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -46,11 +46,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     "corsheaders",
+    'rest_framework_simplejwt',
     # 'django.contrib.staticfiles',
     # 'cloudinary_storage',
     'cloudinary',
     'business',
     # 'cloudinary'
+    'verify',
 
 ]
 
@@ -96,10 +98,10 @@ WSGI_APPLICATION = 'auth.wsgi.application'
 
 AUTH_USER_MODEL = 'authApp.CustomUser'
 
-EMAIL_HOST = Config('EMAIL_HOST')
-EMAIL_HOST_USER = Config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = Config('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = Config('EMAIL_PORT')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = config('EMAIL_PORT')
 
 CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672//'
 CELERY_APP = 'authApp'

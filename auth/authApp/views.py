@@ -13,7 +13,9 @@ from django.contrib.auth.hashers import make_password
 import logging
 logger = logging.getLogger('password_change_logger')
 from django_ratelimit.decorators import ratelimit
-
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
 # Create your views here.
 from rest_framework import generics
@@ -25,42 +27,57 @@ from .models import CustomUser
 
 class UserRegistrationView(generics.CreateAPIView):
     serializer_class = UserSerializer
-    # @transaction.atomic
+    @transaction.atomic
     def perform_create(self, serializer):
-        user = serializer.save()
-        user.activation_code = generate_activation_code()
-        user.referral_code = generate_referral_code()
-        user.save()
+        try:
+            user = serializer.save()
+            user.activation_code = generate_activation_code()
+            user.referral_code = generate_referral_code()
+            user.save()
+            otp = user.activation_code
+            #Check if a referrer's code was provided during registration
+            referrer_code = serializer.validated_data.get('referrer_code')
+            if referrer_code:
+                try:
+                    referrer = CustomUser.objects.get(referral_code=referrer_code)
+                    user.reffered_by = referrer
+                    user.save()
 
-        #Check if a referrer's code was provided during registration
-        referrer_code = serializer.validated_data.get('referrer_code')
-        if referrer_code:
-            try:
-                referrer = CustomUser.objects.get(referral_code=referrer_code)
-                user.reffered_by = referrer
-                user.save()
+                #Reward the referrer everytime a person is referred by him/her
+                    reward_amount = Decimal(1000.00)
+                    referrer.referral_balance = Decimal(str(referrer.referral_balance))
+                    referrer.referral_balance += reward_amount
+                    referrer.referral_count += 1
+                    referrer.save()
+                except CustomUser.DoesNotExist:
+                    pass
 
-            #Reward the referrer everytime a person is referred by him/her
-                reward_amount = Decimal(1000.00)
-                referrer.referral_balance = Decimal(str(referrer.referral_balance))
-                referrer.referral_balance += reward_amount
-                referrer.referral_count += 1
-                referrer.save()
-            except CustomUser.DoesNotExist:
-                pass
+            redirect_url = reverse('activate', kwargs={'pk':user.id})
 
-        redirect_url = reverse('activate', kwargs={'pk':user.id})
+            print(f"Activate url: {redirect_url}")
 
-        print(f"Activate url: {redirect_url}")
+            send_activation_code(user.id, redirect_url)
+            return Response({"message": "Account Successfully Created", "User_id": user.id, "redirect_url": redirect_url})
+        except Exception as e:
+                return Response(
+                    {"error": "Registration failed. Please try again."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
-        send_activation_code(user.id, redirect_url)
-        return Response({"message": "Account Successfully Created"})
+
+
+
+
+
+
     
 
 class ActivateAccountView(generics.UpdateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = ActivationSerializer
     lookup_field = 'pk'
+
+    @transaction.atomic
 
     def update(self, request, *args, **kwargs):
         activation_code = request.data.get('activation_code')
@@ -70,7 +87,7 @@ class ActivateAccountView(generics.UpdateAPIView):
             user.activation_code = ''
             user.is_active = True
             user.save()
-            send_activation_code(email=user.email)
+            send_activation_msg(email=user.email)
             return Response({"message": "Account Activated successfully"}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Invalid activation code"}, status=status.HTTP_400_BAD_REQUEST)
@@ -90,6 +107,7 @@ class LoginView(generics.CreateAPIView):
 
             if user:
                 refresh = RefreshToken.for_user(user)
+                print(refresh.access_token)
                 access_token = str(refresh.access_token)
                 return Response({"access_token": access_token})
             else:
@@ -112,7 +130,7 @@ class SendOtpView(generics.CreateAPIView):
                 #Generate and Send Otp
                 otp = generate_otp()
 
-                send_reset_otp(email, otp)
+                send_reset_otp.delay(email, otp)
 
                 otp_record, created = OtpModel.objects.get_or_create(user=user, defaults={'otp': otp})
                 if not created:
@@ -158,7 +176,7 @@ class ConfirmOtpView(generics.CreateAPIView):
                         user.set_password(new_password)
                         user.save()
 
-                        send_reset_msg(email=user.email)
+                        send_reset_msg.delay(email=user.email)
                         return Response({"message": "Password successfully changed."})
                 else:
                     return Response({"error": "User not found."}, status=status.HTTP_400_BAD_REQUEST)
@@ -201,3 +219,18 @@ class ResetPasswordView(generics.CreateAPIView):
             return Response({"message": "Password changed successfully."})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomerView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CustomerSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return CustomerDetails.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        profile_exists = self.get_queryset().exists()
+        if profile_exists:
+            raise ValidationError("Profile already exists.")
+        serializer.save(user=self.request.user)
