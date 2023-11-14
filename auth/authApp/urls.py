@@ -11,6 +11,7 @@ urlpatterns = [
     path('confirm-otp/', ConfirmOtpView.as_view(), name='confirm-otp'),
     path('password-change/', ResetPasswordView.as_view(), name='password-reset'),
     path('customer-details/', CustomerView.as_view(), name='customer'),
-
+    # path('google-login/', login_with_google, name='customer'),
+    # path('login/facebook/', FacebookLoginView.as_view(), name='social_login_facebook'),
 ]
 

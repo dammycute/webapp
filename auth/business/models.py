@@ -47,10 +47,21 @@ class Investment(models.Model):
     end_date = models.DateField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.slots
     
 
-    def calculate_roi(self, date):
-        days_since_start = (date - self.start_date).days
-        months_since_start = int(days_since_start / 30)
-        roi = self.product.roi * months_since_start
-        return roi
+    # def calculate_roi(self, date):
+    #     days_since_start = (date - self.start_date).days
+    #     months_since_start = int(days_since_start / 30)
+    #     roi = self.product.roi * months_since_start
+    #     return roi
+
+
+
+# class SecondaryMarket(models.Model): 
+#     investment  = models.ForeignKey(Investment, on_delete=models.CASCADE)
+#     slots = models.PositiveBigIntegerField(null=True)
+#     is_sold  = models.BooleanField(default=False)
+#     buyer = models.ForeignKey(CustomUser, on_delete=models.CASCADE)

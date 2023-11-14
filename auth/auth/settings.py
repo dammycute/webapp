@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 import os
 import sys
+
 # sys.path.append('/path/to/decouple/site-packages')
 from decouple import config
 
@@ -26,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -36,54 +37,83 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'authApp',
-    'rest_framework',
-    'drf_yasg',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "authApp",
+    "rest_framework",
+    "drf_yasg",
     "corsheaders",
-    'rest_framework_simplejwt',
+    "rest_framework_simplejwt",
     # 'django.contrib.staticfiles',
     # 'cloudinary_storage',
-    'cloudinary',
-    'business',
+    "cloudinary",
+    "business",
     # 'cloudinary'
-    'verify',
-
+    "verify",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
-    'django_ratelimit.middleware.RatelimitMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django_ratelimit.middleware.RatelimitMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
+# SITE_ID = 1 
+LOGIN_REDIRECT_URL = '/'
 
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": 
+            {
+                'SCOPE': ['profile', 'email', 'https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+                "client_id": config("GOOGLE_ID"),
+                "secret": config("GOOGLE_SECRET_KEY"),
+                'EMAIL_AUTHENTICATION': True,
+                # "key": config("KEY"),
+                # "VERIFIED_EMAIL": True,
+            }
+        
+    }
+}
 
-ROOT_URLCONF = 'auth.urls'
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_AUTO_SIGNUP = False
+
+ROOT_URLCONF = "auth.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
@@ -92,108 +122,112 @@ TEMPLATES = [
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
-WSGI_APPLICATION = 'auth.wsgi.application'
+WSGI_APPLICATION = "auth.wsgi.application"
 
-AUTH_USER_MODEL = 'authApp.CustomUser'
+AUTH_USER_MODEL = "authApp.CustomUser"
 
-EMAIL_HOST = config('EMAIL_HOST')
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = config('EMAIL_PORT')
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = config("EMAIL_PORT")
 
-CELERY_BROKER_URL = 'amqp://guest:guest@localhost:5672//'
-CELERY_APP = 'authApp'
+CELERY_BROKER_URL = "amqp://guest:guest@localhost:5672//"
+CELERY_APP = "authApp"
 
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
     }
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    )
 }
 
 SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ('JWT',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-    'SLIDING_TOKEN_LIFETIME': timedelta(days=14),
-    'SLIDING_TOKEN_LIFETIME_REFRESH_LIFETIME': timedelta(days=14),
-    'SLIDING_TOKEN_REFRESH_LIFETIME_SLIDING': True,
-    'SLIDING_TOKEN_LIFETIME_SLIDING_REFRESH_LIFETIME': False,
+    "AUTH_HEADER_TYPES": ("JWT",),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+    "SLIDING_TOKEN_LIFETIME": timedelta(days=14),
+    "SLIDING_TOKEN_LIFETIME_REFRESH_LIFETIME": timedelta(days=14),
+    "SLIDING_TOKEN_REFRESH_LIFETIME_SLIDING": True,
+    "SLIDING_TOKEN_LIFETIME_SLIDING_REFRESH_LIFETIME": False,
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 CLOUDINARY_STORAGE = {
-   'CLOUD_NAME': 'dvtbcxaqt',
-   'API_KEY': '388753169837777',
-   'API_SECRET': 'y-9JM9eOzTteQkDJKPcojW3wr1s',
-   'secure': True
+    "CLOUD_NAME": "dvtbcxaqt",
+    "API_KEY": "388753169837777",
+    "API_SECRET": "y-9JM9eOzTteQkDJKPcojW3wr1s",
+    "secure": True,
 }
 
 SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'name': 'Authorization',
-            'in': 'header',
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
         },
     },
-    'USE_SESSION_AUTH': False,
-    'USE_BASIC_AUTH_WITH_SESSION': False,
+    "USE_SESSION_AUTH": False,
+    "USE_BASIC_AUTH_WITH_SESSION": False,
 }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'password_change_file': {
-            'level': 'INFO',  # Set the desired log level (INFO, WARNING, etc.).
-            'class': 'logging.FileHandler',
-            'filename': 'C:\Desktop\log\change_log.log',  # Replace with your desired log file path.
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "password_change_file": {
+            "level": "INFO",  # Set the desired log level (INFO, WARNING, etc.).
+            "class": "logging.FileHandler",
+            "filename": "C:\Desktop\log\change_log.log",  # Replace with your desired log file path.
         },
     },
-    'loggers': {
-        'password_change_logger': {
-            'handlers': ['password_change_file'],
-            'level': 'INFO',  # Set the desired log level.
-            'propagate': False,
+    "loggers": {
+        "password_change_logger": {
+            "handlers": ["password_change_file"],
+            "level": "INFO",  # Set the desired log level.
+            "propagate": False,
         },
     },
 }
 
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
+    # 'social_django.backends.facebook.FacebookOAuth2',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
     # Other authentication backends if needed
 ]
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -201,9 +235,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -213,7 +247,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
@@ -222,4 +256,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

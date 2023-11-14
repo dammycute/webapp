@@ -22,6 +22,8 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from .models import CustomUser
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+# from social_django.views import SocialLoginView
 
 
 
@@ -64,13 +66,6 @@ class UserRegistrationView(generics.CreateAPIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-
-
-
-
-
-
-    
 
 class ActivateAccountView(generics.UpdateAPIView):
     queryset = CustomUser.objects.all()
@@ -219,6 +214,28 @@ class ResetPasswordView(generics.CreateAPIView):
             return Response({"message": "Password changed successfully."})
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Google Login 
+
+from allauth.account.auth_backends import AuthenticationBackend
+
+class CustomAuthenticationBackend(AuthenticationBackend):
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        user = super().authenticate(request, username, password, **kwargs)
+
+        if user and not user.is_active:
+            return None
+
+        return user
+
+
+
+
+
+# Facebook login 
+# class FacebookLoginView(SocialLoginView):
+#     backend = 'social_django.backends.facebook.FacebookOAuth2'
+#     success_redirect_url = '/'
 
 
 class CustomerView(generics.CreateAPIView):
