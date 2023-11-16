@@ -9,8 +9,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from .tasks import *
-from django.http import HttpResponse
-
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 # Create your views here.
@@ -84,31 +85,32 @@ class VerifyNIN(generics.CreateAPIView):
             return Response({"error": "Failed to connect to the NIN verification endpoint"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+class qoreid_webhook(APIView):
+    permission_classes = [AllowAny,]
+    def post(self, request, format=None):
+        jsondata = request.body
+        data = json.loads(jsondata)
+        print(data)
 
-def qoreid_webhook_handler(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
+        if data['eventType'] == 'verification_completed':
+            # Handle successful verification event
+            transaction_id = data['transactionId']
+            verification_status = data['status.status']
 
-        event_type = data['eventType']
-        transaction_id = data['transactionId']
-        verification_status = data['status.status']
-
-        if event_type == 'verification_completed':
-            # Update the NinModel instance based on the verification status
+            # Update the NinModel instance based on the verification_status 
             nin_model = NinModel.objects.get(transaction_id=transaction_id)
             nin_model.is_verified = True
             nin_model.save()
 
-            # Send a notification to the user if the verification was successful
             if verification_status:
                 send_nin_verification_success_notification(user=nin_model.customer.user, transaction_id=transaction_id)
             else:
                 send_nin_verification_failure_notification(user=nin_model.customer.user, transaction_id=transaction_id)
 
-        return Response(status=status.HTTP_200_OK)
-    else:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST) 
 
 
 
@@ -146,29 +148,3 @@ class BvnVerificationView(generics.CreateAPIView):
 
         return Response(response.text)
 
-class AuthGet(APIView):
-    def post(self, request):
-        auth_code_url = "https://api.qoreid.com/token"
-        auth_code_payload = {
-            "secret": "ebde58d50dbd4fe19fbc6747c1f8bdd2",
-            "clientId": "FNERU8BH03TA4K3L6VX6"
-        }
-        auth_code_headers = {
-            "accept": "application/json",
-            "content-type": "application/json"
-        }
-
-        try:
-            response = requests.post(auth_code_url, json=auth_code_payload, headers=auth_code_headers)
-            if response.status_code == 201:
-                auth_response = json.loads(response.text)  # Parse the JSON response
-
-                authorization_code = auth_response.get("accessToken")
-                print(authorization_code)
-                return Response(response)
-        except:
-            return Response("pass")
-        #     else:
-        #         return Response({"error": "Failed to obtain authorization code"}, status=status.HTTP_400_BAD_REQUEST)
-        # except requests.exceptions.RequestException:
-        #     return Response({"error": "Failed to connect to the authorization endpoint"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
